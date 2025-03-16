@@ -316,55 +316,38 @@ const resetPassword = (userInfo) => {
   });
 };
 
-const loginUser = (userLogin) => {
-  return new Promise(async (resolve, reject) => {
-    const { email, password } = userLogin;
-    try {
-      const checkUser = await User.findOne({
-        email: email,
-      });
+const loginUser = async (userLogin) => {
+  const { email, password } = userLogin;
 
-      console.log({ checkUser });
-      if (checkUser === null) {
-        reject({
-          status: "ERR",
-          message: "Email đăng nhập không tồn tại",
-        });
-      }
+  // Tìm user trong database
+  const checkUser = await User.findOne({ email });
+  if (!checkUser) {
+    throw new Error("Email đăng nhập không tồn tại");
+  }
 
-      const comparePassword = bcrypt.compareSync(password, checkUser.password);
-      console.log({ comparePassword });
+  // Kiểm tra mật khẩu
+  const isPasswordValid = bcrypt.compareSync(password, checkUser.password);
+  if (!isPasswordValid) {
+    throw new Error("Email hoặc mật khẩu không chính xác");
+  }
 
-      if (!comparePassword) {
-        reject({
-          status: "ERR",
-          message: "Email người dùng hoặc mật khẩu không chính xác",
-        });
-      }
-
-      const access_token = await generalAccessToken({
-        id: checkUser.id,
-        isAdmin: checkUser.isAdmin,
-      });
-
-      const refresh_token = await generalRefreshToken({
-        id: checkUser.id,
-        isAdmin: checkUser.isAdmin,
-      });
-      console.log({ access_token });
-
-      // if (createUser) {
-      resolve({
-        status: "OK",
-        message: "SUCCESS",
-        access_token,
-        refresh_token,
-      });
-      // }
-    } catch (error) {
-      reject(error);
-    }
+  // Tạo access token & refresh token
+  const access_token = generalAccessToken({
+    id: checkUser.id,
+    isAdmin: checkUser.isAdmin,
   });
+
+  const refresh_token = generalRefreshToken({
+    id: checkUser.id,
+    isAdmin: checkUser.isAdmin,
+  });
+
+  return {
+    status: "OK",
+    message: "Đăng nhập thành công",
+    access_token,
+    refresh_token,
+  };
 };
 
 const updateUser = (id, data) => {

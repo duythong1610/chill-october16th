@@ -72,33 +72,40 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const reg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+    // Regex kiểm tra email hợp lệ
+    const emailRegex = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
 
-    const isCheckEmail = reg.test(email);
     if (!email || !password) {
       return res.status(400).json({
         status: "ERR",
         message: "Vui lòng điền đầy đủ thông tin",
       });
-    } else if (!isCheckEmail) {
+    }
+
+    if (!emailRegex.test(email)) {
       return res.status(400).json({
         status: "ERR",
         message: "Email không hợp lệ",
       });
     }
+
+    // Gọi service xử lý đăng nhập
     const response = await UserService.loginUser(req.body);
 
     const { refresh_token, ...newResponse } = response;
+
+    // Lưu refresh_token vào cookie
     res.cookie("refresh_token", refresh_token, {
-      domain: ".railway.app",
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
+      httpOnly: true, // Bảo mật, không cho JS truy cập
+      secure: true, // Chỉ cho phép trên HTTPS
+      sameSite: "strict", // Chống tấn công CSRF
     });
-    return res.status(200).json({ ...newResponse, refresh_token });
+
+    return res.status(200).json(newResponse);
   } catch (error) {
     return res.status(500).json({
-      message: error,
+      status: "ERR",
+      message: error.message || "Có lỗi xảy ra",
     });
   }
 };
