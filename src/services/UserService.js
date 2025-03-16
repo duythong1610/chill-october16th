@@ -326,7 +326,7 @@ const loginUser = (userLogin) => {
 
       console.log({ checkUser });
       if (checkUser === null) {
-        resolve({
+        reject({
           status: "ERR",
           message: "Email đăng nhập không tồn tại",
         });
@@ -336,7 +336,7 @@ const loginUser = (userLogin) => {
       console.log({ comparePassword });
 
       if (!comparePassword) {
-        resolve({
+        reject({
           status: "ERR",
           message: "Email người dùng hoặc mật khẩu không chính xác",
         });
