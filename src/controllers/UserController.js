@@ -72,64 +72,33 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Kiểm tra dữ liệu đầu vào
+    const reg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+
+    const isCheckEmail = reg.test(email);
     if (!email || !password) {
       return res.status(400).json({
         status: "ERR",
         message: "Vui lòng điền đầy đủ thông tin",
       });
-    }
-
-    // Kiểm tra định dạng email hợp lệ
-    const emailRegex = /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/;
-    if (!emailRegex.test(email)) {
+    } else if (!isCheckEmail) {
       return res.status(400).json({
         status: "ERR",
         message: "Email không hợp lệ",
       });
     }
-
-    // Kiểm tra email có tồn tại trong hệ thống không
-    const user = await UserService.findUserByEmail(email);
-    if (!user) {
-      return res.status(401).json({
-        status: "ERR",
-        message: "Email chưa được đăng ký",
-      });
-    }
-
-    // Kiểm tra mật khẩu có đúng không
-    const isMatch = await UserService.comparePassword(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        status: "ERR",
-        message: "Mật khẩu không chính xác",
-      });
-    }
-
-    // Xác thực thành công, tiến hành đăng nhập
-    const response = await UserService.loginUser(user);
+    const response = await UserService.loginUser(req.body);
 
     const { refresh_token, ...newResponse } = response;
-
-    // Ghi refresh token vào cookie
     res.cookie("refresh_token", refresh_token, {
-      domain: ".vercel.app",
+      domain: ".railway.app",
       httpOnly: true,
       secure: true,
       sameSite: "strict",
     });
-
-    return res.status(200).json({
-      status: "OK",
-      message: "Đăng nhập thành công",
-      ...newResponse,
-    });
+    return res.status(200).json({ ...newResponse, refresh_token });
   } catch (error) {
-    console.error("Login Error:", error);
     return res.status(500).json({
-      status: "ERR",
-      message: "Đã xảy ra lỗi, vui lòng thử lại",
+      message: error,
     });
   }
 };
