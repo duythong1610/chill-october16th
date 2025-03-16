@@ -69,6 +69,7 @@ const resetPassword = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
+  console.log(req);
   try {
     const { email, password } = req.body;
 
@@ -91,6 +92,8 @@ const loginUser = async (req, res) => {
 
     // Gọi service xử lý đăng nhập
     const response = await UserService.loginUser(req.body);
+
+    console.log({ response });
 
     const { refresh_token, ...newResponse } = response;
 
